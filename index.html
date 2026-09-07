@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="g7DTvHlRdt6kaJW98Zob3X">
+<head data-page-node-id="Dhzw0H5w7r4rOZWtWMuB9U">
+<meta charset="utf-8" data-page-node-id="jCOsvhFxvMJ8pT3er5eTzd">
+<meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="XfT0JeQQjBUUEmp7gJXo1f">
+<title>Trading bot 原型标注（据 Figma 评论）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#f1f5f9;color:#1f2937;height:100vh;overflow:hidden;
+  display:grid;grid-template-rows:auto 1fr;grid-template-columns:220px 1fr 460px;
+  grid-template-areas:"topbar topbar topbar" "sidenav stage modal"}
+body.all-on{grid-template-columns:220px 1fr;
+  grid-template-areas:"topbar topbar" "sidenav stage"}
+body.all-on .modal{display:none}
+body.all-on .all-only{display:flex}
+
+/* ====== 顶部横向 app bar ====== */
+.topbar{grid-area:topbar;display:flex;align-items:center;gap:16px;padding:10px 22px;
+  background:#0f172a;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);z-index:30}
+.topbar .brand{font-weight:700;font-size:15px;margin-right:auto;white-space:nowrap}
+.topbar .brand small{font-weight:400;color:#94a3b8;font-size:11px;margin-left:8px}
+
+/* ====== 左侧垂直导航栏（可上下滚动） ====== */
+.sidenav{grid-area:sidenav;background:#1e293b;color:#cbd5e1;display:flex;flex-direction:column;
+  overflow:hidden;border-right:1px solid #0f172a}
+.sidenav .nav-head{padding:14px 16px 8px;font-size:11px;color:#64748b;letter-spacing:.08em;
+  text-transform:uppercase;border-bottom:1px solid #334155;flex:0 0 auto}
+.sidenav .nav-scroll{flex:1 1 auto;overflow-y:auto;padding:8px 0}
+.sidenav .nav-scroll::-webkit-scrollbar{width:6px}
+.sidenav .nav-scroll::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+.snav-all{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;border:none;
+  background:#0ea5e9;color:#fff;font-size:13px;font-weight:600;width:100%;text-align:left;
+  margin:0 0 8px;border-radius:0;transition:.12s}
+.snav-all:hover{background:#0284c7}
+.snav-all.active{background:#0284c7}
+.snav-all .icn{font-size:16px}
+.snav{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;border:none;
+  background:transparent;color:#cbd5e1;font-size:13px;width:100%;text-align:left;
+  transition:background .12s;line-height:1.3}
+.snav:hover{background:#334155;color:#fff}
+.snav.active{background:#2563eb;color:#fff;font-weight:600}
+.snav .ord{display:inline-block;width:22px;color:#64748b;font-family:ui-monospace,Consolas,monospace;
+  font-size:11px;flex:0 0 auto;text-align:right}
+.snav.active .ord{color:rgba(255,255,255,.75)}
+.snav .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.snav .mark{display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;flex:0 0 auto}
+
+/* ====== 中间 stage ====== */
+.stage{grid-area:stage;padding:24px;display:flex;align-items:flex-start;justify-content:center;
+  overflow:auto;background:#f1f5f9;min-width:0}
+.frame{position:relative;border-radius:24px;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.18);background:#0b1020;flex:0 0 auto}
+/* img 用 cover+top 居中：393x853 正常图精确充满；异常图自动顶部对齐裁切 */
+.frame img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;
+  object-fit:cover;object-position:top center}
+.badge{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;
+  background:#16a34a;color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);
+  transition:transform .12s,background .12s;z-index:5}
+.badge:hover{transform:scale(1.15)}
+.badge.active{background:#dc2626;transform:scale(1.25);z-index:9}
+
+/* ====== "全部页"网格（仅在 all-on 时显示） ====== */
+.all-wrap{display:none;flex-direction:column;align-items:stretch;width:100%;height:100%;overflow:hidden}
+.all-only{display:none}
+.all-on .stage .frame-wrap{display:none}
+.all-on .stage .all-wrap{display:flex}
+.all-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+  background:#fff;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1f2937}
+.all-head .cnt{color:#64748b;font-size:12px;margin-left:8px}
+.all-grid{flex:1 1 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:14px;padding:20px;overflow-y:auto;align-content:start}
+.cell{background:#fff;border-radius:12px;padding:10px;cursor:pointer;transition:.15s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #e2e8f0}
+.cell:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.cell img{width:100%;height:300px;object-fit:cover;object-position:top center;
+  border-radius:6px;background:#0b1020}
+.cell .nm{font-size:12px;color:#1f2937;font-weight:500;text-align:center;line-height:1.3}
+.cell .ord{color:#94a3b8;font-size:11px;font-family:ui-monospace,Consolas,monospace}
+.cell .ann-tag{font-size:10px;padding:1px 6px;border-radius:8px;background:#dcfce7;color:#16a34a}
+.cell .noann-tag{font-size:10px;padding:1px 6px;border-radius:8px;background:#f1f5f9;color:#94a3b8}
+
+/* ====== 右列描述弹窗（永远占位不遮挡 stage） ====== */
+.modal{grid-area:modal;background:#fff;display:flex;flex-direction:column;
+  border-left:1px solid #e2e8f0;min-width:0;overflow:hidden}
+.modal.empty{align-items:center;justify-content:center;color:#94a3b8;font-size:13px;
+  text-align:center;padding:24px;line-height:1.8}
+.m-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+  border-bottom:1px solid #e2e8f0;background:#0f172a;color:#fff;flex:0 0 auto}
+.m-head .mt{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+.m-head .mt .num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#16a34a;
+  align-items:center;justify-content:center;font-size:12px;flex:0 0 auto}
+.m-head .mt .title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-close{border:none;background:transparent;color:#cbd5e1;font-size:20px;cursor:pointer;line-height:1;
+  flex:0 0 auto}
+.m-close:hover{color:#fff}
+.tabs{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px 8px;border-bottom:1px solid #eef2f7;
+  flex:0 0 auto}
+.tab{border:none;background:#eef2f7;color:#475569;padding:5px 10px;border-radius:18px;
+  font-size:12px;cursor:pointer}
+.tab.active{background:#2563eb;color:#fff}
+.panes{flex:1 1 auto;overflow-y:auto;padding:14px 18px;min-height:0}
+.panes section{display:none}
+.panes section.on{display:block}
+.sub-h{font-size:11px;font-weight:700;color:#2563eb;letter-spacing:.04em;margin:14px 0 4px;
+  text-transform:uppercase}
+.sub-h:first-child{margin-top:0}
+.body{font-size:13px;line-height:1.75;color:#374151;white-space:normal}
+.empty-msg{color:#94a3b8;font-size:12px;padding:6px 0}
+.frame-wrap{display:flex;align-items:flex-start;justify-content:center;width:100%}
+.no-desc{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#94a3b8;font-size:14px;line-height:1.6;text-align:center;padding:20px;width:100%}
+.no-desc b{color:#64748b;display:block;font-size:14px}
+</style>
+</head>
+<body class="" data-page-node-id="RNU4z50cGmdviYasivFAoX">
+<header class="topbar" data-page-node-id="L6VNsVBfo02db7GcGbyTCw">
+  <span class="brand" data-page-node-id="PJrOEJbmCPvQt1OEuAW1uL">Trading bot 原型标注<small data-page-node-id="QCP30lJKdjbammNpftQdkA">仅为部分 demo 展示 · ZenLiu</small></span>
+</header>
+<nav class="sidenav" data-page-node-id="0Ec1XZgA4GbSXlOuV1JqT8">
+  <button class="snav-all" id="snav-all" onclick="showAll()" data-page-node-id="WXYmGQBeDuNWSb383mF4tV">
+    <span class="icn" data-page-node-id="pguJG37kXoLUwAt0aoLcqn">📋</span><span data-page-node-id="lYtCLzvMlUKudY4gjuoKLd">全部页</span>
+  </button>
+  <div class="nav-scroll" id="sidenav" data-page-node-id="Vv92bDR5oMRcTS5m6nMh5A"></div>
+</nav>
+<div class="stage" id="stage" data-page-node-id="Yix9zxKaFRhbABAF6A6hca"></div>
+<div class="modal" id="modal" data-page-node-id="7uy6pm64vBk6raAqEFofnH">
+  <div class="m-head" data-page-node-id="DuGQvRJH3QqPNiGbP9ZYNE">
+    <div class="mt" data-page-node-id="DzG86W7azp3KzTEmVXtePu">
+      <span class="num" id="m-num" data-page-node-id="wExXaskxK8YrH3AFCOQNFk">—</span>
+      <span class="title" id="m-title" data-page-node-id="Q8C1pGBLickIqPDycCvs2g">点击画板内徽标查看标注</span>
+    </div>
+    <button class="m-close" onclick="closeAnn()" title="关闭" data-page-node-id="9TqSDDM7Zes3v5avqp1tme">×</button>
+  </div>
+  <nav class="tabs" id="m-tabs" data-page-node-id="ujOLo1q24JYBAM6dsLBQbc">
+    <button class="tab active" data-pane="all" data-page-node-id="qtX3uFFE7sA3sz38cqszjL">全部</button>
+    <button class="tab" data-pane="page" data-page-node-id="oAKfy74hMBX2jyD7hfICxk">页面内容</button>
+    <button class="tab" data-pane="inter" data-page-node-id="Gyfwh8bDEvsNJxfMRJa7MH">交互说明</button>
+    <button class="tab" data-pane="rule" data-page-node-id="9ftkrDHfa11nCFR88TMdow">业务规则</button>
+    <button class="tab" data-pane="field" data-page-node-id="vNqEH1C3B6pcUPOuBTCYhF">字段说明</button>
+    <button class="tab" data-pane="todo" data-page-node-id="xC6CxDbr55eX8cUz9vUVsS">待确认</button>
+  </nav>
+  <div class="panes" id="m-panes" data-page-node-id="TrGTGJ55ooKdJh8MJVltA1">
+    <section class="on" data-pane="all" data-page-node-id="Z5iUMKlKNCdttAzLiGQwvp"></section>
+    <section data-pane="page" data-page-node-id="QHvCtFcmY8XtacNoPDsb9m"></section>
+    <section data-pane="inter" data-page-node-id="y8deKnBjFN4Yx53PQu2HLT"></section>
+    <section data-pane="rule" data-page-node-id="R17Mv9RJd7PIcY0XMQLjVs"></section>
+    <section data-pane="field" data-page-node-id="4mrz0NxW11fJRKbS9wFOq1"></section>
+    <section data-pane="todo" data-page-node-id="03OYV4QQhOMBKCofCYM170"></section>
+  </div>
+</div>
+
+<script>
+const PAGES = [{"key": "31_816", "name": "首页", "img": "home.png", "frame_w": 393, "frame_h": 853, "anns": [{"n": 1, "title": "顶部链选择区", "bx": 354, "by": 50, "page": "顶部横向排列「ETH、SOL、BASE」三个链标签，当前选中 SOL（蓝色字体），未选中为灰色；最右侧是齿轮形状的设置图标，点击可进入设置页。", "inter": "• 点击「设置」齿轮图标 → 进入设置页\n• 点击 ETH/SOL/BASE 标签 → 切换当前链", "rule": "• 链仅支持 ETH、SOL、BASE 三种，不可新增或删除\n• 切换链时，若当前选中钱包无对应链的账户，需提示「该钱包不支持当前链，请切换钱包」\n• 进入设置/邀请/账户页后，返回时需保留当前页的链与钱包选中状态（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包信息区", "bx": 354, "by": 124, "page": "模块标题为「钱包信息」，下方以 3 列网格展示钱包卡片，含「默认钱包、钱包2-钱包8」共 8 个钱包，最后一个位置是「全部钱包」按钮；每个卡片显示钱包名称+余额（示例均为 1000.00），「钱包8」为蓝色边框选中态；点击「全部钱包」可展开完整钱包列表，点击任意钱包卡片可切换选中状态。", "inter": "• 点击「全部钱包」→ 展开完整钱包列表\n• 点击任意钱包卡片 → 切换选中状态", "rule": "• 钱包卡片最多显示 8 个（含「全部钱包」），超出需通过「全部钱包」页展示\n• 不可同时选中多个钱包，选中态仅能唯一存在\n• 用户进入 App 后应由后端自动生成一个钱包（来源：井井 评论）", "field": "• 余额仅展示两位小数，无小数时补 0（如 1000 需显示 1000.00），余额为 0 时显示「0.00」", "todo": "• 首次切换链时，默认选择【默认钱包】，且每个新账户每个链下都初始化一个默认钱包（来源：ZenLiu 评论，待落实）"}, {"n": 3, "title": "地址信息区", "bx": 354, "by": 427, "page": "模块标题为「地址信息」，下方是橙色边框的合约地址输入框，占位符为「Contract address」，默认显示「0x...」前缀；输入框下方是灰色不可点击按钮「请先复制合约地址」，提示用户操作前置步骤；最下方是蓝色主按钮「粘贴并购买 →」，点击后自动粘贴剪贴板地址并进入交易流程，跳转至【交易页面-买入】。", "inter": "• 点击「粘贴并购买」→ 自动粘贴剪贴板地址并进入交易流程（跳转买入页）\n• 可做成自动识别：剪贴板内若有符合标准的钱包地址 → 跳到购买页面；无 → 提示「请先复制合约地址」（来源：井井 评论）", "rule": "• 输入框仅支持粘贴/手动输入合约地址，不支持输入其他内容\n• 粘贴时校验地址格式：ETH 链仅支持 42 位 Hex 格式，SOL 链仅支持 Base58 格式，BASE 链同 ETH 格式，格式错误提示「当前链不支持该地址格式」\n• 剪贴板无内容/内容非有效地址时，点击「粘贴并购买」需拦截，提示「未检测到有效合约地址」\n• 输入框为空时，「粘贴并购买」按钮置灰不可点击", "field": "• 合约地址格式：ETH=42 位 Hex；SOL=Base58；BASE=同 ETH\n• 占位符显示「0x...」前缀", "todo": "—"}, {"n": 4, "title": "交易模式与历史区", "bx": 354, "by": 716, "page": "左侧是「极速模式」「安全模式」单选选项，当前选中「极速模式」（橙色文字+圆点选中），「安全模式」为未选中态；右侧是「交易历史 >」文字链接，点击跳转至【交易历史页】。", "inter": "• 点击「极速模式 / 安全模式」→ 互斥切换\n• 点击「交易历史 >」→ 跳转交易历史页（需携带当前链参数）", "rule": "• 仅支持两种模式互斥选择，不可不选\n• 极速模式：跳过非必要校验，仅做基础地址格式检查\n• 安全模式：需增加二次确认 + 风险地址库比对，风险地址需弹窗警示\n• 交易历史点击后需携带当前链参数跳转", "field": "—", "todo": "• 安全模式应增加 MEV 防夹（来源：井井 评论）\n• 安全模式是否改名为「防夹」？（ZenLiu 提议，未最终定）\n• 安全模式是否需交易二次弹窗确认？（待定）"}, {"n": 5, "title": "底部导航栏", "bx": 354, "by": 796, "page": "固定在页面底部，包含「交易」「邀请」「账户」三个选项，均为「图标+文字」组合；当前「交易」为选中态（蓝色图标+文字），其余为灰色。", "inter": "• 点击「交易 / 邀请 / 账户」→ 切换对应页面\n• 导航栏在页面滚动时始终固定，不可隐藏", "rule": "• 导航栏仅支持点击切换，不支持滑动\n• 切换至「邀请」「账户」页后，返回「交易」页需保留之前的链、钱包、模式选中状态", "field": "—", "todo": "—"}, {"n": 6, "title": "安全模式 · MEV 防夹（设计反馈）", "bx": 176, "by": 718, "page": "针对「安全模式」的增强要求：应增加 MEV 防夹能力，防止被三明治攻击夹子。", "inter": "—", "rule": "• 安全模式应增加 MEV 防夹（来源：井井 评论）\n• 安全模式有二次验证（井井）\n• 可考虑改名为「防夹」（ZenLiu 提议）\n• 安全模式应有交易二次弹窗确认（ZenLiu）", "field": "—", "todo": "• 改名「防夹」是否落地？二次弹窗确认与风险地址库比对的实现方式？（均待定）"}, {"n": 7, "title": "剪贴板自动识别（设计反馈）", "bx": 230, "by": 630, "page": "对「地址信息区」的体验增强：进入页面时自动识别剪贴板内是否有符合标准的钱包地址。", "inter": "• 有有效地址 → 直接跳到购买页面\n• 无有效地址 → 提示用户「请先复制合约地址」", "rule": "• 识别对象：剪贴板内符合当前链标准的合约地址（Hex / Base58）", "field": "—", "todo": "—"}, {"n": 8, "title": "自动生成钱包（设计反馈）", "bx": 90, "by": 118, "page": "针对「钱包信息区」的产品策略：因项目有后端，用户进入 App 后应自动生成一个钱包。", "inter": "—", "rule": "• 用户进入 App 后由后端自动生成一个钱包（来源：井井 评论）\n• 首次切换链时，默认选择【默认钱包】，且每个新账户每个链下初始化一个默认钱包（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_817", "name": "钱包管理页", "img": "frames/f_31_817.png", "frame_w": 370, "frame_h": 907, "anns": [{"n": 1, "title": "顶部导航区", "bx": 340, "by": 35, "page": "左上角是返回箭头图标，点击可回到上一级页面；页面标题为「全部钱包」，居中显示。", "inter": "• 点击返回箭头 → 回到上一级页面", "rule": "• 返回时需保留上一页的链、钱包选中状态，避免用户重新选择\n• 标题仅为展示用，不可点击（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包列表区（卡片式）", "bx": 340, "by": 250, "page": "以卡片式列表展示多个钱包，每个钱包卡片包含：钱包名称（如「钱包1」）、以美元显示的资产总额及对应人民币换算金额、钱包地址（部分字符隐藏，右侧有复制图标）；下方功能按钮：「接收」「转账」「导出私钥」。", "inter": "• 点击复制图标 → 复制地址到剪贴板\n• 点击「接收 / 转账 / 导出私钥」→ 进入对应流程\n• 上下滑动 → 加载更多钱包", "rule": "• 地址复制：点击复制图标后需提示「地址已复制」，若复制失败需提示「复制失败，请重试」\n• 导出私钥：点击后需触发二次身份验证（密码），验证成功后跳转至【导出私钥页】方可导出\n• 资产金额：仅保留两位小数，为0时显示「$0.00」，金额过大时需自动格式化（如 1,000,000.00）\n• 钱包卡片：支持上下滑动加载更多，无更多钱包时底部显示「已加载全部」（来源：ZenLiu 评论）", "field": "• 金额单位 USD，自动转千分位\n• 地址显示格式：首尾各保留 4-6 字符，中间省略号", "todo": "• （井井）这里的链字段多余可以不要，因为前面页面已经选了链，到这里肯定是该链上导入的钱包"}, {"n": 3, "title": "底部操作区", "bx": 340, "by": 870, "page": "左侧是「排序/删除」文字按钮，点击进入【钱包排序/删除】页；右侧是蓝色主按钮「+ 添加钱包」，点击进入钱包创建/导入流程。", "inter": "• 点击「排序/删除」→ 进入排序/删除页\n• 点击「+ 添加钱包」→ 进入创建/导入流程", "rule": "• 添加钱包：仅支持原型展示的4种链类型（ETH/SOL/BASE/…），不可新增其他链\n• 导入钱包时需校验助记词/私钥格式，格式错误提示「无效的助记词/私钥」\n• 当钱包数量达到上限（20个），「+ 添加钱包」按钮置灰不可点击（来源：ZenLiu 评论）", "field": "• 上限 20 个钱包", "todo": "—"}]}, {"key": "31_818", "name": "钱包排序", "img": "frames/f_31_818.png", "frame_w": 393, "frame_h": 853, "anns": [{"n": 1, "title": "顶部操作栏", "bx": 354, "by": 50, "page": "左侧是「取消」按钮，点击可退出排序/删除模式并返回上一级页面；中间是页面标题「排序/删除」；右侧是「保存」按钮，点击可保存当前调整的钱包顺序。", "inter": "• 点击「取消」→ 退出排序/删除模式\n• 点击「保存」→ 保存调整后的钱包顺序", "rule": "• 「保存」按钮仅在钱包顺序发生调整时才会变为可点击状态，否则保持置灰\n• 点击「取消」时，若未保存调整的顺序，需弹窗提示「未保存修改，是否退出？」避免误操作（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包操作列表", "bx": 354, "by": 350, "page": "顶部提示文字：「长按拖动可调整顺序，点击左侧删除图标可删除钱包」；每个钱包条目包含：左侧红色垃圾桶图标（点击可删除该钱包）、钱包名称、链类型、资产金额；右侧拖动图标（长按可上下拖动调整顺序）。", "inter": "• 长按拖动图标 → 上下拖动调整顺序\n• 点击垃圾桶图标 → 触发删除流程（→ 删除确认弹窗）", "rule": "• 删除限制：点击垃圾桶图标后，需弹窗二次确认「确定删除该钱包？删除后无法恢复」如【删除确认弹窗页】\n• 拖动限制：仅支持在当前列表内上下拖动调整顺序，不可拖出列表外\n• 数量限制：当列表仅剩1个钱包时，删除图标自动隐藏，禁止删除最后一个钱包（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 3, "title": "底部添加入口", "bx": 354, "by": 800, "page": "列表下方有「+ 添加钱包」按钮，点击可进入钱包创建/导入流程。", "inter": "• 点击「+ 添加钱包」→ 进入创建/导入流程", "rule": "• 该按钮功能与「全部钱包」页的「添加钱包」完全一致，受相同的数量上限和链类型限制\n• 当钱包数量达到上限时，该按钮置灰不可点击", "field": "—", "todo": "—"}]}, {"key": "31_809", "name": "钱包管理-删除确认弹窗 1", "img": "frames/f_31_809.png", "frame_w": 390, "frame_h": 800, "anns": [{"n": 1, "title": "头部区域", "bx": 354, "by": 120, "page": "显示圆形提示图标（UI 老师设计），用于强化警示。", "inter": "—", "rule": "—", "field": "—", "todo": "—"}, {"n": 2, "title": "核心提示", "bx": 354, "by": 220, "page": "标题为「是否确认删除钱包？」，下方小字提示「请牢记私钥，以防造成资产损失」。", "inter": "—", "rule": "• 弹窗必须展示私钥提醒，不可省略（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 3, "title": "钱包信息", "bx": 354, "by": 340, "page": "以列表形式展示待删除钱包的关键信息：钱包名称「钱包3」、余额「$95,432.00」。", "inter": "—", "rule": "• 展示的钱包名称和余额必须与待删除钱包完全一致，避免信息错误（来源：ZenLiu 评论）", "field": "• 余额保留两位小数 + 千分位", "todo": "—"}, {"n": 4, "title": "操作按钮", "bx": 354, "by": 560, "page": "底部有两个按钮「取消」和「删除」。", "inter": "• 点击「取消」→ 关闭弹窗并返回上一级页面\n• 点击「删除」→ 执行删除操作（删除后无法恢复）", "rule": "• 若钱包余额不为零，点击「删除」前需额外弹窗二次确认「钱包仍有资产，删除后将无法通过本钱包管理资产，是否继续？」（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_810", "name": "钱包管理-私钥导出安全提示 1", "img": "frames/f_31_810.png", "frame_w": 390, "frame_h": 800, "anns": [{"n": 1, "title": "头部图标与标题", "bx": 354, "by": 130, "page": "显示圆形图标强化安全警示；标题「私钥导出安全提示」加粗突出。", "inter": "—", "rule": "—", "field": "—", "todo": "—"}, {"n": 2, "title": "风险提示列表（4 条）", "bx": 354, "by": 360, "page": "用橙色警示图标+文字列出 4 条核心安全要求：1) 请勿截屏或拍照保存私钥；2) 请勿通过网络传输私钥信息；3) 建议手写记录并妥善保管；4) 私钥泄露将导致资产损失。", "inter": "—", "rule": "• 弹窗内的 4 条安全提示为固定内容，不可删减或修改（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 3, "title": "确认选项 + 操作按钮", "bx": 354, "by": 620, "page": "一个复选框，文字「我已了解以上风险，继续导出」；底部有「取消」和「继续导出」两个按钮。", "inter": "• 点击「取消」→ 关闭弹窗并返回上一级页面\n• 点击「继续导出」→ 进入私钥展示页面", "rule": "• 强制确认：复选框未勾选时，「继续导出」按钮必须置灰不可点击\n• 重复触发：每次发起导出私钥操作都必须弹出此提示，不可跳过（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_811", "name": "钱包管理-私钥导出页面 1", "img": "frames/f_31_811.png", "frame_w": 390, "frame_h": 550, "anns": [{"n": 1, "title": "顶部导航区", "bx": 354, "by": 30, "page": "左侧是返回箭头，点击可回到上一级安全提示弹窗；页面标题为「导出私钥」，居中显示。", "inter": "• 点击返回箭头 → 回到上一级安全提示弹窗", "rule": "• 流程强制完成：用户必须点击「我已安全保存」才能退出该页面，无法通过返回箭头直接退出，防止私钥页面被意外留在后台", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包信息区", "bx": 354, "by": 110, "page": "展示当前导出私钥的钱包信息：钱包名称「钱包3」、链类型「Solana Wallet」+ 钱包头像。", "inter": "—", "rule": "—", "field": "—", "todo": "—"}, {"n": 3, "title": "私钥展示区", "bx": 354, "by": 320, "page": "橙色背景提示框「私钥是资产唯一凭证，请务必妥善保管，切勿泄露给他人」（含警示图标）；下方「钱包私钥」标题 + 完整私钥字符串 + 蓝色按钮「复制私钥」（点击将私钥复制到剪贴板）。", "inter": "• 点击「复制私钥」→ 将私钥复制到剪贴板", "rule": "• 私钥必须完整展示，不可隐藏部分字符\n• 私钥文本框不可编辑，仅支持复制\n• 点击「复制私钥」后需立即提示「私钥已复制」，若复制失败需提示「复制失败，请重试」\n• 安全防护：页面需禁止截屏/录屏，若检测到截屏行为，需立即隐藏私钥并提示「禁止截屏，以防私钥泄露」（来源：ZenLiu 评论）", "field": "• 私钥文本不可编辑，仅支持复制", "todo": "—"}, {"n": 4, "title": "底部确认按钮", "bx": 354, "by": 500, "page": "蓝色主按钮「我已安全保存」，点击后完成导出流程并返回钱包列表页。", "inter": "• 点击「我已安全保存」→ 完成导出并返回钱包列表", "rule": "• 用户必须点击该按钮才能退出，无法通过返回箭头直接退出", "field": "—", "todo": "—"}]}, {"key": "31_812", "name": "钱包创建页面 1", "img": "frames/f_31_812.png", "frame_w": 390, "frame_h": 870, "anns": [{"n": 1, "title": "顶部导航区", "bx": 354, "by": 30, "page": "左侧是返回箭头，点击可回到上一级页面；页面标题为「创建钱包」，居中显示。", "inter": "• 点击返回箭头 → 回到上一级页面", "rule": "—", "field": "—", "todo": "—"}, {"n": 2, "title": "头部视觉区", "bx": 354, "by": 150, "page": "展示一个带有科技感图案的圆形图标（UI 老师设计）；下方标题「创建新钱包」+ 辅助文案「创建一个全新的 Web3 钱包，开始您的区块链之旅」。", "inter": "—", "rule": "—", "field": "—", "todo": "—"}, {"n": 3, "title": "核心操作区（互斥）", "bx": 354, "by": 370, "page": "包含两个主要选项：1)「创建钱包」—— 带有「+」图标，文案「创建全新钱包账户」，点击进入新钱包创建流程；2)「导入钱包」—— 带有导入图标，文案「通过助记词导入现有钱包」，点击进入助记词导入流程（即下方两个画板的入口）。", "inter": "• 点击「创建钱包」→ 进入新钱包创建流程\n• 点击「导入钱包」→ 进入助记词导入流程", "rule": "• 「创建钱包」和「导入钱包」为互斥选项，不可同时选择", "field": "—", "todo": "• （井井）这里的字段多余，可以不要，因为前面的页面已经选了链，到这里肯定是该链上导入的钱包"}, {"n": 4, "title": "安全提示区", "bx": 354, "by": 620, "page": "蓝色背景提示框「请确保在安全环境下创建钱包，不要向任何人泄露您的助记词和私钥」。", "inter": "—", "rule": "• 安全环境检测：若检测到当前网络为公共 Wi-Fi，可弹窗提示「当前网络环境存在风险，建议在安全网络下创建钱包」（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 5, "title": "协议确认区", "bx": 354, "by": 790, "page": "复选框「我已阅读并同意 服务条款和隐私政策」，其中「服务条款和隐私政策」为可点击的蓝色文字链接。", "inter": "• 勾选复选框 → 激活下方按钮\n• 点击「服务条款和隐私政策」→ 跳转协议页", "rule": "• 协议强制确认：复选框未勾选时，「创建钱包」和「导入钱包」两个选项按钮必须置灰不可点击\n• 链接跳转：点击「服务条款和隐私政策」需跳转至对应的协议页面，且返回时保留当前页面的勾选状态（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_819", "name": "导入助记词", "img": "frames/f_31_819.png", "frame_w": 393, "frame_h": 853, "anns": [{"n": 1, "title": "顶部导航区（推断）", "bx": 354, "by": 30, "page": "由 31:812 钱包创建页点「导入钱包」按钮进入。Figma 评论里没有给出独立的页面规格，仅有「钱包创建页面」描述中提到「通过助记词导入现有钱包」。", "inter": "• （待定）通常包含返回箭头、标题「导入助记词」", "rule": "• 入口来自 31:812「导入钱包」按钮", "field": "—", "todo": "• 此页缺独立规格，需补充：①助记词输入框（默认 12/24 个单词） ②单词顺序/拼写校验 ③下一步进入导入私钥或直接进入钱包主页"}]}, {"key": "32_2", "name": "导入私钥", "img": "frames/f_32_2.png", "frame_w": 393, "frame_h": 853, "anns": [{"n": 1, "title": "顶部导航区（推断）", "bx": 354, "by": 30, "page": "由助记词导入流程进入或直接由 31:812「导入钱包」进入。Figma 评论里没有给出独立的页面规格。", "inter": "• （待定）通常包含返回箭头、标题「导入私钥」", "rule": "• 入口来自 31:812「导入钱包」按钮 或助记词流程", "field": "• 通常要求 Base58/Hex 格式校验", "todo": "• 此页缺独立规格，需补充：①私钥输入框 ②格式校验 ③「开始导入」按钮的二次确认"}]}, {"key": "62_2", "name": "Mask group（交易历史）", "img": "frames/f_62_2.png", "frame_w": 368, "frame_h": 1421, "anns": [{"n": 1, "title": "顶部导航区", "bx": 336, "by": 60, "page": "左侧为返回箭头，点击可回到上一级页面；标题为「交易历史」，居中显示。", "inter": "• 点击返回箭头 → 回到上一级页面", "rule": "—", "field": "—", "todo": "—"}, {"n": 2, "title": "链选择区", "bx": 336, "by": 130, "page": "横向排列 `BTC` / `ETH` / `SOL` 三个链标签，当前选中 `SOL`（蓝色下划线高亮）。", "inter": "• 点击 BTC / ETH / SOL → 切换当前链", "rule": "• 切换链时，需实时刷新交易概览和列表数据，避免数据不一致（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 3, "title": "钱包选择区", "bx": 336, "by": 210, "page": "横向排列「全部钱包」「默认钱包」「钱包2」「钱包3」，当前选中「全部钱包」（蓝色背景高亮）。", "inter": "• 点击任意钱包标签 → 切换筛选", "rule": "• 切换钱包时，需实时刷新交易概览和列表数据", "field": "—", "todo": "—"}, {"n": 4, "title": "交易概览区", "bx": 336, "by": 320, "page": "蓝色卡片展示当前筛选条件下的总交易额（如 `4.5000 SOL`）和交易笔数（如 `4`）。", "inter": "—", "rule": "• 概览数值随筛选条件实时刷新（来源：ZenLiu 评论）", "field": "• 金额保留 4 位小数（与代币精度对齐）", "todo": "—"}, {"n": 5, "title": "搜索与筛选区", "bx": 336, "by": 430, "page": "搜索框（提示文字「搜索代币名称或地址」） + 筛选标签「全部」「买入」「卖出」+ 「时间」下拉排序。", "inter": "• 输入搜索词 → 实时过滤\n• 点击「全部/买入/卖出」→ 类型筛选\n• 点击「时间」→ 弹出日期区间选择器", "rule": "• 搜索框仅支持按代币名称模糊匹配或地址精确匹配\n• 「时间」下拉弹出日期区间选择器，单次查询跨度不能超过 90 天，超过弹窗提示「日期跨度不能超过 90 天」\n• 最长可查询 12 个月内的历史记录，超出弹窗「仅支持查询最近 12 个月的交易记录」（来源：ZenLiu 评论）", "field": "• 日期格式 YYYY-MM-DD 起止", "todo": "—"}, {"n": 6, "title": "交易列表区（条目结构）", "bx": 336, "by": 620, "page": "按时间倒序展示交易记录，每条包含：代币名称 + Logo、交易方向（绿色向上=买入，红色向下=卖出）、交易时间、所属钱包、交易状态（成功/进行中/失败）、数量/价格/总计金额、交易哈希（部分隐藏）+ 复制图标 + 链上跳转图标。", "inter": "• 点击复制图标 → 复制哈希\n• 点击链上跳转图标 → 打开对应链的区块浏览器", "rule": "• 「进行中」的交易需定期轮询链上状态，更新为「成功」或「失败」\n• 点击交易哈希的跳转图标，需打开对应链的区块浏览器（如 ETH）查看详情\n• 下拉刷新 / 上拉加载更多，每次最多 20 条（来源：ZenLiu 评论）", "field": "• 哈希展示：首尾各保留 N 字符 + 中间省略号", "todo": "—"}, {"n": 7, "title": "空状态", "bx": 336, "by": 1350, "page": "当筛选后无交易记录时，需展示「暂无交易记录」的空状态提示。", "inter": "—", "rule": "• 空状态展示文字 + 引导跳转到交易页（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_803", "name": "邀请界面-邀请标签页", "img": "frames/f_31_803.png", "frame_w": 390, "frame_h": 1387, "anns": [{"n": 1, "title": "顶部导航区", "bx": 358, "by": 30, "page": "包含「邀请」「活动」「积分」三个标签，当前选中「邀请」（蓝高亮），标题为「邀请好友」。", "inter": "• 点击「邀请/活动/积分」→ 切换对应标签页", "rule": "• 三个标签互斥", "field": "—", "todo": "—"}, {"n": 2, "title": "活动核心展示区", "bx": 358, "by": 100, "page": "文案「Invite 1 Friend, You Can Earn A Profit Of 50 USDT」突出单用户奖励金额；辅助说明「Daily UTC+0 Updates, Automatically Deposited Into The Wallet The Next Day」；规则入口「查看邀请活动规则」按钮，点击跳转活动详情页。", "inter": "• 点击「查看邀请活动规则」→ 跳转活动详情页", "rule": "• 「查看邀请活动规则」链接需指向最新的活动规则文档，避免规则与展示文案不一致（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 3, "title": "邀请入口区", "bx": 358, "by": 280, "page": "展示带橙色边框的邀请二维码，下方文字提示「扫描二维码邀请好友」；展示邀请链接，右侧配有复制图标，点击可复制链接到剪贴板。", "inter": "• 点击复制图标 → 复制链接到剪贴板\n• 被邀请方扫码 → 完成注册并绑定邀请关系", "rule": "• 复制邀请链接后需提示「链接已复制」，若复制失败需提示「复制失败，请重试」（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 4, "title": "数据概览区", "bx": 358, "by": 610, "page": "佣金比例：My commission rebate ratio 25%；总邀请人数：100。", "inter": "—", "rule": "• 总邀请人数和返佣金额需每日 UTC+0 更新，更新后需弹窗提示用户「邀请收益已更新」（来源：ZenLiu 评论）", "field": "• 佣金比例单位为 %", "todo": "—"}, {"n": 5, "title": "链选择区", "bx": 358, "by": 745, "page": "横向排列 ETH / SOL / BASE 三个链标签，当前选中 SOL（蓝色背景高亮）。", "inter": "• 点击 ETH / SOL / BASE → 切换", "rule": "• 切换链时，需实时刷新对应链的返佣金额，确保数据与当前链一致（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 6, "title": "收益与操作区", "bx": 358, "by": 850, "page": "可提现金额：100 USDT，右侧配有「提现」按钮；当前链总返佣金额：SOL Chain 总返佣金额 $6.7。", "inter": "• 点击「提现」→ 进入钱包选择页，并选择提现钱包，选择后校验钱包是否有效", "rule": "• 「提现」按钮仅在可提现金额 ≥ 最低提现门槛（如 10 USDT）时可点击，否则置灰（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 7, "title": "底部功能区", "bx": 358, "by": 1095, "page": "「Download」按钮（灰色）和「Share」按钮（蓝色），用于下载邀请页保存到本地相册或分享邀请内容。", "inter": "• 点击 Download → 保存邀请页到本地\n• 点击 Share → 分享邀请内容（主要是分享图片的形式【邀请分享弹窗】）", "rule": "• Share 主要是分享图片的形式（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 8, "title": "底部导航栏", "bx": 358, "by": 1335, "page": "固定显示「交易」「邀请」「账户」，当前选中「邀请」（蓝色高亮）。", "inter": "• 点击对应图标 → 切换页面", "rule": "• —", "field": "—", "todo": "—"}]}, {"key": "31_804", "name": "邀请分享弹窗", "img": "frames/f_31_804.png", "frame_w": 300, "frame_h": 800, "anns": []}, {"key": "31_805", "name": "邀请界面-活动规则", "img": "frames/f_31_805.png", "frame_w": 390, "frame_h": 914, "anns": []}, {"key": "31_806", "name": "邀请界面-活动中心", "img": "frames/f_31_806.png", "frame_w": 390, "frame_h": 964, "anns": []}, {"key": "31_807", "name": "活动详情页", "img": "frames/f_31_807.png", "frame_w": 390, "frame_h": 906, "anns": []}, {"key": "31_808", "name": "邀请界面-邀请好友", "img": "frames/f_31_808.png", "frame_w": 390, "frame_h": 981, "anns": []}, {"key": "39_417", "name": "交易页面-买入", "img": "frames/f_39_417.png", "frame_w": 390, "frame_h": 1078, "anns": [{"n": 1, "title": "顶部导航区", "bx": 358, "by": 18, "page": "左侧为返回箭头，点击可回到上一级页面；标题为「SOL」，显示当前交易的链；右上角是设置图标，点击可进入【设置页】。", "inter": "• 点击返回箭头 → 回上一级\n• 点击设置图标 → 进入设置页", "rule": "• 标题展示当前链名称（SOL 等）", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包信息区", "bx": 358, "by": 88, "page": "以 3 列网格展示多个钱包卡片，包含「默认钱包、钱包2-钱包8」和「全部钱包」按钮；当前选中「钱包8」（蓝色边框高亮），每个卡片显示钱包名称和余额（如 1000.00）。", "inter": "• 点击「全部钱包」→ 展开\n• 点击钱包卡片 → 切换选中", "rule": "• 与账户管理页的钱包信息区共用同一组件", "field": "—", "todo": "—"}, {"n": 3, "title": "交易模式切换", "bx": 358, "by": 395, "page": "包含「买入」「卖出」两个标签，当前选中「买入」（蓝色背景高亮）。", "inter": "• 点击「买入/卖出」→ 互斥切换", "rule": "• 买入/卖出互斥，仅能选中其一", "field": "—", "todo": "—"}, {"n": 4, "title": "代币与行情区", "bx": 358, "by": 455, "page": "展示当前交易代币 CORN，附带合约地址、当前价格 $0.0002023 及涨跌幅（保留 2 位小数）；下方是 K 线图，支持切换 1s / 5s / 15s / 1m 等不同时间周期。", "inter": "• 点击 K 线时间周期按钮（1s / 5s / 15s / 1m）→ 切换周期", "rule": "• K 线图和价格需实时刷新（如 1 秒/次），确保用户看到最新行情（来源：ZenLiu 评论）", "field": "• 涨跌幅保留 2 位小数", "todo": "—"}, {"n": 5, "title": "数量设置区", "bx": 358, "by": 740, "page": "提供快捷数量按钮（0.2 / 0.5 / 1 / 2 / 自定义），点击铅笔可手动修改自定义快捷；显示可用余额「可用 0.00 SOL」，以及预计获得的代币数量和对应价值。", "inter": "• 点击快捷数量 → 填入对应数量\n• 点击铅笔 → 编辑自定义快捷数量", "rule": "• 需校验买入金额不能大于可用余额，否则提示「余额不足」\n• 可用余额为 0 时，【买入】按钮变更为【充值】按钮\n• 输入值不能为 0 或负数，否则拦截输入并提示「请输入有效数量」（来源：ZenLiu 评论）", "field": "• 快捷数量单位为 SOL", "todo": "—"}, {"n": 6, "title": "P1 与核心操作区", "bx": 358, "by": 865, "page": "P1 区域显示交易模式、滑点、手续费；点击 P1 区域，跳转至【交易设置页】；底部是蓝色主按钮「买入」，点击可进入交易确认流程。", "inter": "• 点击 P1 → 跳转交易设置页\n• 点击「买入」→ 进入交易确认", "rule": "• 当交易模式为安全模式时：点击「买入」前，需二次确认交易金额、代币数量和手续费，避免误操作（来源：ZenLiu 评论）", "field": "• P1 显示三项：交易模式、滑点、手续费", "todo": "—"}, {"n": 7, "title": "底部导航栏", "bx": 358, "by": 1020, "page": "固定在页面底部，包含「交易」「邀请」「账户」三个选项；当前「交易」为选中态（蓝色）。", "inter": "• 点击对应图标 → 切换页面", "rule": "• 切换至邀请/账户页后，返回交易页需保留链、钱包、模式选中状态", "field": "—", "todo": "—"}]}, {"key": "39_416", "name": "交易页面-交易设置", "img": "frames/f_39_416.png", "frame_w": 390, "frame_h": 1078, "anns": []}, {"key": "31_750", "name": "交易页面-卖出", "img": "frames/f_31_750.png", "frame_w": 390, "frame_h": 1078, "anns": []}, {"key": "31_801", "name": "买入成功提示框 1", "img": "frames/f_31_801.png", "frame_w": 412, "frame_h": 281, "anns": []}, {"key": "31_802", "name": "卖出成功提示框 1", "img": "frames/f_31_802.png", "frame_w": 412, "frame_h": 281, "anns": []}, {"key": "31_822", "name": "账户管理", "img": "frames/f_31_822.png", "frame_w": 370, "frame_h": 1151, "anns": [{"n": 1, "title": "顶部导航与链标签区", "bx": 338, "by": 60, "page": "右上角为设置图标，点击可进入【设置页】；链标签包含 ETH / SOL / BASE，当前选中 SOL（蓝色高亮）。", "inter": "• 点击「设置」图标 → 进入设置页\n• 点击 ETH/SOL/BASE 标签 → 切换当前链", "rule": "• 链切换时需实时刷新钱包信息、余额总计和持仓详情，确保数据与当前链完全一致（来源：ZenLiu 评论）", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包信息区", "bx": 338, "by": 124, "page": "以 3 列网格展示多个钱包卡片，包含「默认钱包、钱包2-钱包8」和「全部钱包」按钮；当前选中「钱包8」（蓝色边框高亮），每个卡片显示钱包名称和余额（如 1000.00）；钱包余额总计：显示当前链下所有钱包的总余额 1000.00。", "inter": "• 点击「全部钱包」→ 展开完整钱包列表\n• 点击任意钱包卡片 → 切换选中状态", "rule": "• 钱包余额总计需为当前链下所有钱包的余额之和，若有钱包锁定或资产异常，需排除异常数据后再计算（来源：ZenLiu 评论）", "field": "• 余额仅展示两位小数", "todo": "—"}, {"n": 3, "title": "快捷操作区", "bx": 338, "by": 620, "page": "提供「充值」「提现」「交易记录」「账户分析」四个功能按钮，点击可直接跳转对应页面。", "inter": "• 点击四个按钮 → 分别跳转充值页 / 提现页 / 交易记录页 / 账户分析页", "rule": "• 跳转需携带当前链与选中钱包参数", "field": "—", "todo": "—"}, {"n": 4, "title": "持仓详情区", "bx": 338, "by": 710, "page": "以卡片形式展示代币持仓信息（如 MOODENG），包含持仓数量、买入均价、总买入/卖出数量、持仓盈亏和收益率。", "inter": "• 点击持仓卡片 → 进入该代币的详情/交易页", "rule": "• 当用户完成交易后，需实时更新对应代币的持仓信息，确保与链上状态一致（来源：ZenLiu 评论）", "field": "• 持仓盈亏：正数绿色字体，负数红色字体带 - 号\n• 收益率保留两位小数", "todo": "—"}, {"n": 5, "title": "悬浮返回顶部按钮", "bx": 338, "by": 1060, "page": "右下角为蓝色向上箭头图标，点击可快速返回页面顶部。", "inter": "• 点击 → 平滑滚动至页面顶部", "rule": "• 悬浮按钮仅在页面向下滚动超过一屏时显示，回到顶部后自动隐藏（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_821", "name": "账户分析", "img": "frames/f_31_821.png", "frame_w": 393, "frame_h": 853, "anns": [{"n": 1, "title": "顶部导航区", "bx": 361, "by": 18, "page": "左侧为返回箭头，点击可回到上一级页面【账户管理页】；标题为「账户分析」，居中显示。", "inter": "• 点击返回箭头 → 回到账户管理页", "rule": "• 标题固定为「账户分析」", "field": "—", "todo": "—"}, {"n": 2, "title": "钱包概览区", "bx": 361, "by": 85, "page": "展示当前钱包（钱包 1）的资产净值：$2436.33。", "inter": "• 下拉 → 手动刷新数据", "rule": "• 资产净值和盈亏数据需每 3 分钟自动刷新一次，确保用户看到最新的资产状况；支持下拉手动刷新（来源：ZenLiu 评论）", "field": "• 资产净值单位为 USD", "todo": "—"}, {"n": 3, "title": "盈亏数据区", "bx": 361, "by": 175, "page": "今日盈亏：0.00%；按时间维度展示 7 日盈亏、30 日盈亏、累计盈亏，同时显示对应金额；保留 2 位小数，正数字体绿色，负数字体红色，同时带 - 号。", "inter": "—", "rule": "• 30 日盈亏等时间维度的计算，需严格按照对应周期内的资产变动进行，避免计算逻辑错误（来源：ZenLiu 评论）", "field": "• 盈亏率保留 2 位小数\n• 盈亏金额单位 USD", "todo": "—"}, {"n": 4, "title": "持仓详情区", "bx": 361, "by": 345, "page": "以卡片形式展示代币持仓信息（如 MOODENG），包含持仓数量、对应价值、买入均价、总买入/卖出数量、持仓盈亏（绿色字体为盈利）、收益率。", "inter": "• 点击持仓卡片 → 进入该代币的详情/交易页", "rule": "• 当用户完成交易后，需实时更新对应代币的持仓数量和盈亏数据，确保与链上状态一致（来源：ZenLiu 评论）", "field": "• 持仓盈亏：正数绿色，负数红色带 -\n• 收益率保留 2 位小数", "todo": "—"}, {"n": 5, "title": "空状态与悬浮按钮", "bx": 361, "by": 780, "page": "右下角为蓝色向上箭头图标，点击可快速返回页面顶部；若钱包无任何持仓，需展示「暂无持仓」的空状态提示，并引导用户进入交易页面。", "inter": "• 点击悬浮按钮 → 平滑滚动至页面顶部", "rule": "• 悬浮按钮仅在页面向下滚动超过一屏时显示，回到顶部后自动隐藏\n• 空状态：展示「暂无持仓」并引导进入交易页（来源：ZenLiu 评论）", "field": "—", "todo": "—"}]}, {"key": "31_823", "name": "充值页面", "img": "frames/f_31_823.png", "frame_w": 393, "frame_h": 853, "anns": []}, {"key": "31_824", "name": "持仓收益分享", "img": "frames/f_31_824.png", "frame_w": 393, "frame_h": 853, "anns": []}, {"key": "31_813", "name": "提现-Token选择页面 1", "img": "frames/f_31_813.png", "frame_w": 390, "frame_h": 800, "anns": []}, {"key": "31_825", "name": "提现", "img": "frames/f_31_825.png", "frame_w": 393, "frame_h": 840, "anns": []}, {"key": "31_826", "name": "提现授权", "img": "frames/f_31_826.png", "frame_w": 393, "frame_h": 853, "anns": []}, {"key": "31_827", "name": "网络费用选择", "img": "frames/f_31_827.png", "frame_w": 393, "frame_h": 853, "anns": []}, {"key": "31_829", "name": "充值/提现记录", "img": "frames/f_31_829.png", "frame_w": 393, "frame_h": 853, "anns": []}, {"key": "31_814", "name": "提现详情页 1", "img": "frames/f_31_814.png", "frame_w": 390, "frame_h": 800, "anns": []}, {"key": "31_828", "name": "充值/提现记录1", "img": "frames/f_31_828.png", "frame_w": 393, "frame_h": 897, "anns": []}, {"key": "31_830", "name": "设置", "img": "frames/f_31_830.png", "frame_w": 393, "frame_h": 853, "anns": []}, {"key": "39_483", "name": "交易设置", "img": "frames/f_39_483.png", "frame_w": 393, "frame_h": 810, "anns": []}, {"key": "84_148", "name": "AI金狗雷达", "img": "frames/f_84_148.png", "frame_w": 370, "frame_h": 2170, "anns": []}];
+let cur = null;          // 当前画板 key（null = 全部页）
+const modal = document.getElementById('modal');
+const stage = document.getElementById('stage');
+const sidenav = document.getElementById('sidenav');
+const sidenavAll = document.getElementById('snav-all');
+
+function renderSidenav(){
+  const items = PAGES.map((p,i)=>{
+    const mark = p.anns && p.anns.length ? '<span class="mark"></span>' : '';
+    const isActive = cur===p.key;
+    return `<button class="snav ${isActive?'active':''}" data-key="${p.key}" onclick="switchPage('${p.key}')">
+      <span class="ord">${i+1}</span><span class="nm">${p.name}</span>${mark}
+    </button>`;
+  }).join('');
+  sidenav.innerHTML = items;
+}
+
+function renderStage(p){
+  const hasAnn = p.anns && p.anns.length;
+  const badges = hasAnn ? p.anns.map(a=>
+    `<button class="badge" style="left:${a.bx}px;top:${a.by}px" data-id="${a.n}" onclick="openAnn(${a.n})">${a.n}</button>`
+  ).join('') : '';
+  const frame = `<div class="frame-wrap"><div class="frame" style="width:${p.frame_w}px;height:${p.frame_h}px">
+    <img src="${p.img}" alt="${p.name}">${badges}
+  </div></div>`;
+  const noDesc = `<div class="no-desc"><b>本画板暂无页面描述</b></div>`;
+  return frame + (hasAnn ? '' : noDesc);
+}
+
+function switchPage(key){
+  const p = PAGES.find(x=>x.key===key); if(!p) return;
+  cur = key;
+  document.body.classList.remove('all-on');
+  renderSidenav();
+  sidenavAll.classList.remove('active');
+  stage.innerHTML = renderStage(p);
+  // 默认弹出序号 1
+  if(p.anns && p.anns.length) openAnn(p.anns[0].n); else closeAnn();
+  // 滚动 sidenav 到当前项
+  const activeBtn = sidenav.querySelector('.snav.active');
+  if(activeBtn) activeBtn.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+
+function showAll(){
+  cur = null;
+  document.body.classList.add('all-on');
+  renderSidenav();
+  sidenavAll.classList.add('active');
+  const cells = PAGES.map((p,i)=>{
+    const tag = (p.anns && p.anns.length)
+      ? `<span class="ann-tag">有标注</span>`
+      : `<span class="noann-tag">仅截图</span>`;
+    return `<div class="cell" onclick="switchPage('${p.key}')">
+      <img src="${p.img}" alt="${p.name}">
+      <div class="ord">#${i+1}</div>
+      <div class="nm">${p.name}</div>
+      ${tag}
+    </div>`;
+  }).join('');
+  stage.innerHTML = `<div class="all-wrap">
+    <div class="all-head">📋 全部画板<span class="cnt">共 ${PAGES.length} 项 · 按 Figma 画板左→右顺序</span></div>
+    <div class="all-grid">${cells}</div>
+  </div>`;
+  closeAnn();
+}
+
+const ORDER = [["page","页面内容"],["inter","交互说明"],["rule","业务规则"],["field","字段说明"],["todo","待确认"]];
+const EMPTY = "—";
+function esc(t){ return (t||"").replace(/\n/g,"<br>"); }
+function fillOne(pane, text, label){
+  if(!text || text===EMPTY) pane.innerHTML = '<p class="empty-msg">本序号暂无'+label+'标注</p>';
+  else pane.innerHTML = '<div class="body">'+esc(text)+'</div>';
+}
+function openAnn(id){
+  if(!cur) return;
+  const p = PAGES.find(x=>x.key===cur); if(!p) return;
+  const a = p.anns.find(x=>x.n===id); if(!a) return;
+  document.querySelectorAll('.badge').forEach(b=>b.classList.toggle('active',+b.dataset.id===id));
+  document.getElementById('m-num').textContent = a.n;
+  document.getElementById('m-title').textContent = a.title;
+  let all = "";
+  ORDER.forEach(([k,label])=>{
+    if(a[k] && a[k]!==EMPTY) all += '<div class="sub-h">'+label+'</div><div class="body">'+esc(a[k])+'</div>';
+  });
+  document.querySelector('#m-panes section[data-pane="all"]').innerHTML =
+    all || '<p class="empty-msg">本序号暂无标注内容</p>';
+  fillOne(document.querySelector('#m-panes section[data-pane="page"]'), a.page, "页面内容");
+  fillOne(document.querySelector('#m-panes section[data-pane="inter"]'), a.inter, "交互说明");
+  fillOne(document.querySelector('#m-panes section[data-pane="rule"]'), a.rule, "业务规则");
+  fillOne(document.querySelector('#m-panes section[data-pane="field"]'), a.field, "字段说明");
+  fillOne(document.querySelector('#m-panes section[data-pane="todo"]'), a.todo, "待确认");
+  document.querySelectorAll('#m-tabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.pane==='all'));
+  document.querySelectorAll('#m-panes section').forEach(s=>s.classList.toggle('on', s.dataset.pane==='all'));
+  modal.classList.remove('empty');
+}
+function closeAnn(){
+  document.querySelectorAll('.badge').forEach(b=>b.classList.remove('active'));
+  modal.classList.add('empty');
+  document.getElementById('m-num').textContent = '—';
+  document.getElementById('m-title').textContent = '点击画板内徽标查看标注';
+  document.querySelectorAll('#m-panes section').forEach(s=>s.innerHTML = '');
+}
+document.querySelectorAll('#m-tabs .tab').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('#m-tabs .tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('#m-panes section').forEach(s=>s.classList.remove('on'));
+    t.classList.add('active');
+    document.querySelector('#m-panes section[data-pane="'+t.dataset.pane+'"]').classList.add('on');
+  };
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAnn(); });
+
+// 初始：默认进入第 1 个画板
+switchPage(PAGES[0].key);
+</script>
+</body>
+</html>
